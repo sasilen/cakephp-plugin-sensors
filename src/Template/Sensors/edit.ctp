@@ -22,6 +22,7 @@
     <fieldset>
         <legend><?= __('Edit Sensor') ?></legend>
         <?php
+            echo $this->Form->control('id',array('type'=>'text'));
             echo $this->Form->control('name');
             echo $this->Form->control('datetime');
             echo $this->Form->control('description');

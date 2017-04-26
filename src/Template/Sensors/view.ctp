@@ -34,6 +34,16 @@
             <td><?= h($sensor->datetime) ?></td>
         </tr>
     </table>
+    <div class="sensors index large-10 medium-9 columns content">
+
+    <div class="chart">
+        <h4>1-Wire sensors</h4>
+        <div id="linewrapper" style="display: block; float: left; width:50%; margin-bottom: 20px;"></div>
+        <div class="clear"></div>
+        <?php echo $this->Highcharts->render($myChart, $chartName); ?>
+    </div>
+
+    </div>
     <div class="related">
         <h4><?= __('Related Sensor Values') ?></h4>
         <?php if (!empty($sensor->sensor_values)): ?>

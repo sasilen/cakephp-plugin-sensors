@@ -38,7 +38,7 @@ class SensorValuesTable extends Table
 
         $this->belongsTo('Sensors', [
             'foreignKey' => 'sensor_id',
-            'joinType' => 'INNER',
+            'joinType' => 'LEFT',
             'className' => 'Sensors.Sensors'
         ]);
     }

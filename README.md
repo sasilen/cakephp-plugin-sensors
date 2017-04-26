@@ -9,3 +9,6 @@ The recommended way to install composer packages is:
 ```
 composer require sasilen/Sensors
 ```
+
+./bin/cake plugin load -r Highcharts
+./bin/cake plugin load -r Sensors
