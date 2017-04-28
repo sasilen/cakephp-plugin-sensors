@@ -1,5 +1,5 @@
 {
-    "name": "sasilen/Sensors",
+    "name": "sasilen/sensors",
     "description": "Sensors plugin for CakePHP",
     "type": "cakephp-plugin",
     "require": {
