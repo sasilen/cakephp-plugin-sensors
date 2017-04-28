@@ -24,6 +24,9 @@ class SensorsController extends AppController
      */
     public function index($tag = null)
     {
+        $series = array();
+        $chart = array();
+
 /*      $this->paginate['limit'] = 30;
       $sensors = $this->paginate($this->Sensors->find()->contain(['SensorValues' => function ($q) {return $q
           ->where(['SensorValues.datetime >= ' => new \DateTime('-7 days')]);
