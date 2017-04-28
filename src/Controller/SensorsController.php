@@ -4,7 +4,6 @@ namespace Sensors\Controller;
 use Sensors\Controller\AppController;
 use Cake\I18n\Time;
 
-
 /**
  * Sensors Controller
  *
@@ -23,11 +22,78 @@ class SensorsController extends AppController
      *
      * @return \Cake\Network\Response|null
      */
-    public function index()
+    public function index($tag = null)
     {
-        $sensors = $this->paginate($this->Sensors);
+/*      $this->paginate['limit'] = 30;
+      $sensors = $this->paginate($this->Sensors->find()->contain(['SensorValues' => function ($q) {return $q
+          ->where(['SensorValues.datetime >= ' => new \DateTime('-7 days')]);
+          ->order('datetime DESC');
+*/
+        if (!is_null($tag)) :
+            $query = $this->Sensors->find()
+                ->contain(['SensorValues' => ['sort'=> ['SensorValues.datetime' => 'ASC' ]],
+                           'Tags'])
+                ->matching('Tags', function ($q) use ($tag) {
+                    return $q->where(['Tags.label LIKE "'. $tag .'"']);
+            });
+            $sensors = $this->paginate($query);
+        else:
+            $this->paginate = [
+                'contain' => [
+                    'SensorValues' => ['sort'=> ['SensorValues.datetime' => 'ASC']],
+//                                       'filter'= ['SensorValues.datetime >= ' => new \DateTime('-7 days')]],
+                    'Tags'
+                ]
+            ];
+            $sensors = $this->paginate($this->Sensors);
+        endif;
+
+        $chartName = 'Line Chart';
+        $myChart = $this->Highcharts->createChart();
+        foreach($sensors as $sensor):
+            foreach($sensor['sensor_values'] as $sv):
+                $time = new Time($sv->datetime);
+                if ($tag=='byAge'):
+                  $age = date_diff(date_create($sensor->datetime),date_create($sv->datetime));
+                  $series[$sv->type][$sensor->name][] = array(floatval($age->format('%a')/365),$sv->value);
+                elseif(strpos( $sv->type, 'latch' ) !== false):
+                  $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,floatval($time->format('H').$time->format('i')));
+                else:
+                  $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,$sv->value);
+                endif;
+            endforeach;
+        endforeach; 
+
+        foreach ( $series as $type => $sensor ) :
+          $chart[$type] = $this->Highcharts->createChart();
+          $chart[$type]->chart['renderTo'] = 'linewrapper_'.$type;
+          if (strpos( $type, 'latch' ) === false) $chart[$type]->chart['type'] = 'line';
+          else $chart[$type]->chart['type'] = 'scatter';
+          $chart[$type]->title['text'] = $type;
+          $chart[$type]->subtitle['text'] = 'Raspberry';
+          $chart[$type]->yAxis['title']['text'] = $type;
+          $chart[$type]->xAxis['title']['text'] = 'date';
+          if ($tag!='Age') $chart[$type]->xAxis['type'] = 'datetime';
+          $chart[$type]->plotOptions->line->marker->enabled = true;
+          $chart[$type]->chart->zoomType = 'x';
+          if (strpos( $type, 'latch' ) !== false) :
+              $chart[$type]->tooltip->formatter = $this->Highcharts->createJsExpr(
+                  "function() {
+                        return ''+
+                        Highcharts.dateFormat('%e - %b - %Y', new Date(this.x))+' d, '+ this.y +' h';
+                  }"
+              );
+          endif;
+
+        foreach ($sensor as $name => $values):
+          $chart[$type]->series[] = array(
+            'name' => $name,
+            'data' => $values);
+          endforeach;
+        endforeach;
 
         $this->set(compact('sensors'));
+        $this->set(compact('chart','chartName'));
         $this->set('_serialize', ['sensors']);
     }
 
@@ -41,237 +107,49 @@ class SensorsController extends AppController
     public function view($id = null)
     {
         $sensor = $this->Sensors->get($id, [
-            'contain' => ['SensorValues']
+              'contain' => ['SensorValues','Tags']
         ]);
         foreach($sensor['sensor_values'] as $sv):
-          $time = new Time($sv->datetime);
-          $values[$sv->type][$time->toUnixString()*1000][$sensor['name']][$time->toUnixString()*1000] = floatval($sv['value']);
+            $time = new Time($sv->datetime);
+                if(strpos( $sv->type, 'latch' ) !== false):
+                    $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,floatval($time->format('H').$time->format('i')));
+                else:
+                    $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,$sv->value);
+                endif;
         endforeach;
-        
-        foreach ($values as $type => $typeset) :
-          foreach ($typeset as $time => $sensors) :
-            $xAxisCategories[$type][] = $time;
-            foreach ($sensors as $sensori => $value) :
-              if ($type=='alarm') {
-                foreach ($value as $x=>$y):
-                  $chartDatas[$type][$sensori][] = array($time,$y);
-                endforeach;
-              } else {
-                $chartDatas[$type][$sensori][] = array($time,$value);
-              }
-            endforeach;
-          endforeach;
-        endforeach;
-       $chartName = 'Line Chart';
 
-                $myChart = $this->Highcharts->createChart();
-                $myChart->chart = array(
-                    'renderTo' => 'linewrapper',
-                    'type' => 'line',
-                    'marginRight' => 290,
-                    'marginBottom' => 25,
-                    'zoomType' => 'x'
-                );
-
-                $myChart->title = array(
-                    'text' => 'Temperatures',
-                    'x' => - 20
-                );
-
-                $myChart->subtitle = array(
-                    'text' => 'Raspberry PI, 1-wire',
-                    'x' => - 20
-                );
-
-                $myChart->yAxis = array(
-                    'title' => array(
-                        'text' => 'Temperature (°C)'
-                    ),
-                    'plotLines' => array(
-                        array(
-                            'value' => 0,
-                            'width' => 1,
-                            'color' => '#808080'
-                        )
-                    )
-                );
-                $myChart->xAxis = array(
-                  'title' => array(
-                    'text' => 'Date'
-                  ),
-                  'type' => 'datetime',
-                );
-
-                $myChart->legend = array(
-                    'layout' => 'vertical',
-                    'align' => 'right',
-                    'verticalAlign' => 'top',
-                    'x' => 10,
-                    'y' => 100,
-                    'borderWidth' => 0
-                );
-
-                foreach ( $chartDatas['temperature'] as $sensori => $values ) :
-                  $myChart->series[] = array(
-                        'name' => $sensori,
-                        'data' => $values);
-                endforeach;
-
-
-        $this->set('sensor', $sensor);
-        $this->set(compact('myChart', 'chartName'));
-        $this->set('_serialize', ['sensor']);
-    }
-    public function highcharts()
-    {
-        $this->paginate['limit'] = 30;
-        $sensors = $this->paginate($this->Sensors->find()->contain(['SensorValues' => function ($q) {return $q
-            ->where(['SensorValues.datetime >= ' => new \DateTime('-7 days')]);
-//          ->order('datetime DESC');
-    }]));
-        $this->set('sensors',$sensors);
-        $this->set('_serialize', ['sensors']);
-    foreach ($sensors as $sensor) :
-        foreach ($sensor['sensor_values'] as $SensorValue):
-          $time = new Time($SensorValue->datetime);
-          if ($sensor['type']=='alarm') {
-            if ($SensorValue['value']==1) {
-//             $date = $time->format('Y-m-d');
-//              echo $time->format('Y-m-d'). " - ".$time->format('H:i:s')."<br>";
-               $values['temperature'/*$sensor['type']*/][ strtotime($time->format('Y-m-d'))*1000 ][$sensor['description']][$time->toUnixString()*1000] = floatval($time->format('H').$time->format('i'));
-               //$values[$sensor['type']][ $time->toUnixString()*1000 ][$sensor['description']] = intval($time->format('h'));
-               
-            }
-          } else {
-                  $values['temperature'/*$sensor['type']*/][ $time->toUnixString()*1000 ][$sensor['description']] = floatval($SensorValue['value']);
-          }
-        endforeach;
-    endforeach;debug($values);
-    ksort($values['temperature']);
-    ksort($values['alarm']);
-//    debug($values['alarm']);
-    
-    foreach ($values as $type => $typeset) :
-      foreach ($typeset as $time => $sensors) :
-        $xAxisCategories[$type][] = $time;
-        foreach ($sensors as $sensor => $value) :
-          if ($type=='alarm') {
-            foreach ($value as $x=>$y):
-            $chartDatas[$type][$sensor][] = array($time,$y);
-            endforeach;
-          } else {
-            $chartDatas[$type][$sensor][] = array($time,$value);
-          }
-        endforeach;
-      endforeach;
-    endforeach;
-
- $chartName = 'Line Chart';
-
-                $myChart = $this->Highcharts->createChart();
-                $myChart->chart = array(
-                    'renderTo' => 'linewrapper',
-                    'type' => 'line',
-                    'marginRight' => 290,
-                    'marginBottom' => 25,
-                    'zoomType' => 'x'
-                );
-
-                $myChart->title = array(
-                    'text' => 'Temperatures',
-                    'x' => - 20
-                );
-                
-                $myChart->subtitle = array(
-                    'text' => 'Raspberry PI, 1-wire',
-                    'x' => - 20
-                );
-
-                $myChart->yAxis = array(
-                    'title' => array(
-                        'text' => 'Temperature (°C)'
-                    ),
-                    'plotLines' => array(
-                        array(
-                            'value' => 0,
-                            'width' => 1,
-                            'color' => '#808080'
-                        )
-                    )
-                );
-                $myChart->xAxis = array(
-                  'title' => array(
-                    'text' => 'Date'
-                  ),
-                  'type' => 'datetime',
-                );
-
-                $myChart->legend = array(
-                    'layout' => 'vertical',
-                    'align' => 'right',
-                    'verticalAlign' => 'top',
-                    'x' => 10,
-                    'y' => 100,
-                    'borderWidth' => 0
-                );
-
-                foreach ( $chartDatas['temperature'] as $sensor => $values ) :
-                  $myChart->series[] = array(
-                        'name' => $sensor,
-                        'data' => $values);
-                endforeach;
-
-
-/*                $myChart->tooltip->formatter = $this->Highcharts->createJsExpr(
-                "function() { return '<b>'+ this.series.name +'</b><br/>'+ this.x +': '+ this.y +'°C';}");
-*/
-
-                $this->set(compact('myChart', 'chartName'));
-
-                            $ScatterChart = 'Scatter Chart';
-                $myScatter = $this->Highcharts->createChart();
-                $myScatter->chart->renderTo = 'scatterwrapper';
-                $myScatter->chart->type = 'scatter';
-                $myScatter->chart->zoomType = "xy";
-                $myScatter->title->text = 'Door opening detections';
-                $myScatter->subtitle->text = 'Source: Raspberry Pi, 1-wire';
-                $myScatter->xAxis->title->enabled = 1;
-                $myScatter->xAxis->title->text = 'Date';
-                $myScatter->xAxis->type = 'datetime';
-                $myScatter->xAxis->startOnTick = 1;
-
-                $myScatter->xAxis->endOnTick = 1;
-                $myScatter->xAxis->showLastLabel = 1;
-                $myScatter->yAxis->title->text = "Time";
-                $myScatter->tooltip->formatter = $this->Highcharts->createJsExpr(
-                    "function() {
+        foreach ( $series as $type => $cat ) :
+          $chart[$type] = $this->Highcharts->createChart();
+          $chart[$type]->chart['renderTo'] = 'linewrapper_'.$type;
+          if (strpos( $type, 'latch' ) === false) $chart[$type]->chart['type'] = 'line';
+          else $chart[$type]->chart['type'] = 'scatter';
+          $chart[$type]->title['text'] = $type;
+          $chart[$type]->subtitle['text'] = 'Raspberry';
+          $chart[$type]->yAxis['title']['text'] = $type;
+          $chart[$type]->xAxis['title']['text'] = 'date';
+          $chart[$type]->xAxis['type'] = 'datetime';
+          $chart[$type]->plotOptions->line->marker->enabled = true;
+          $chart[$type]->chart->zoomType = 'x';
+          if (strpos( $type, 'latch' ) !== false) :
+              $chart[$type]->tooltip->formatter = $this->Highcharts->createJsExpr(
+                  "function() {
                         return ''+
                         Highcharts.dateFormat('%e - %b - %Y', new Date(this.x))+' d, '+ this.y +' h';
-                    }"
-                );
-                $myScatter->legend->layout = 'vertical';
-                $myScatter->legend->align = 'left';
-                $myScatter->legend->verticalAlign = 'top';
-                $myScatter->legend->x = 100;
-                $myScatter->legend->y = 70;
-                $myScatter->legend->floating = 1;
-                $myScatter->legend->backgroundColor = '#FFFFFF';
-                $myScatter->legend->borderWidth = 1;
-                $myScatter->plotOptions->scatter->marker->radius = 5;
-                $myScatter->plotOptions->scatter->marker->states->hover->enabled = 1;
-                $myScatter->plotOptions->scatter->marker->states->hover->lineColor = "rgb(100,100,100)";
-                $myScatter->plotOptions->scatter->states->hover->marker->enabled = false;
-    foreach ( $chartDatas['alarm'] as $sensor => $values ) : 
-                        $myScatter->series[] = array(
-                            'name' => $sensor,
-                            'color' => "rgba(223, 83, 83, .5)",
-                            'data' => $values
-                  );
-                endforeach;
-                $this->set(compact('myScatter', 'ScatterChart'));
+                  }"
+              );
+          endif;
 
+          foreach ($cat as $name => $values):
+          $chart[$type]->series[] = array(
+            'name' => $name,
+            'data' => $values);
+          endforeach;
+        endforeach;
+
+        $this->set(compact('chart','chartName'));
+        $this->set(compact('sensor'));
+        $this->set('_serialize', ['sensor']);
     }
-
 
     /**
      * Add method
@@ -304,7 +182,7 @@ class SensorsController extends AppController
     public function edit($id = null)
     {
         $sensor = $this->Sensors->get($id, [
-            'contain' => []
+            'contain' => ['Tags']
         ]);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $sensor = $this->Sensors->patchEntity($sensor, $this->request->getData());
@@ -315,6 +193,12 @@ class SensorsController extends AppController
             }
             $this->Flash->error(__('The sensor could not be saved. Please, try again.'));
         }
+        $tags = [];
+        $alltags = $sensor->tags;
+        foreach ($alltags as $tag):
+          $tags[] = $tag->label;
+        endforeach;
+        $sensor->tags = implode(',', $tags);
         $this->set(compact('sensor'));
         $this->set('_serialize', ['sensor']);
     }

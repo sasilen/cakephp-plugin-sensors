@@ -20,6 +20,7 @@
             echo $this->Form->control('name');
             echo $this->Form->control('datetime');
             echo $this->Form->control('description');
+            echo $this->Form->input('tags');
         ?>
     </fieldset>
     <?= $this->Form->button(__('Submit')) ?>

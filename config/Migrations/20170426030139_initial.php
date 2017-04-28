@@ -22,6 +22,11 @@ class Initial extends AbstractMigration
           'limit' => 255,
           'null' => false,
       ])
+      ->addColumn('tag_count', 'integer', [
+          'default' => null,
+          'limit' => 5,
+          'null' => true,
+      ])
       ->create();
 
     $table = $this->table('sensor_values');

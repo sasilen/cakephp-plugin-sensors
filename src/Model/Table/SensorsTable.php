@@ -33,6 +33,8 @@ class SensorsTable extends Table
     {
         parent::initialize($config);
 
+        $this->addBehavior('Muffin/Tags.Tag');
+
         $this->setTable('sensors');
         $this->setDisplayField('name');
         $this->setPrimaryKey('id');

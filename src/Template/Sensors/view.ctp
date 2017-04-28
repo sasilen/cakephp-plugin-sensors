@@ -33,15 +33,27 @@
             <th scope="row"><?= __('Datetime') ?></th>
             <td><?= h($sensor->datetime) ?></td>
         </tr>
+        <tr>
+            <th><?= __('Tags') ?></th>
+            <td>
+                <?php foreach ($sensor->tags as $tag): ?>
+                    <?= h($tag->label).',' ?>
+                <?php endforeach; ?>
+            </td>
+        </tr>
     </table>
     <div class="sensors index large-10 medium-9 columns content">
 
-    <div class="chart">
-        <h4>1-Wire sensors</h4>
-        <div id="linewrapper" style="display: block; float: left; width:50%; margin-bottom: 20px;"></div>
-        <div class="clear"></div>
-        <?php echo $this->Highcharts->render($myChart, $chartName); ?>
-    </div>
+
+    <?php foreach (array_keys($chart) as $type):?>
+        <div class="chart">
+            <h4><?=$type;?></h3> 
+            <div id="linewrapper_<?=$type;?>" style="display: block; margin-bottom: 20px;"></div>
+            <div class="clear"></div>
+            <?php echo $this->Highcharts->render($chart[$type],$type); ?>
+        </div>
+    <?php endforeach;?>
+
 
     </div>
     <div class="related">
