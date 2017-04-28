@@ -5,12 +5,8 @@ class Initial extends AbstractMigration
 {
   public function change()
   {
-    $table = $this->table('sensors', ['id' => false, 'primary_key' => ['id']]);
+    $table = $this->table('sensors');
     $table
-      ->addColumn('id', 'string', [
-          'limit' => 15,
-          'null' => false,
-      ])
       ->addColumn('name', 'string', [
           'limit' => 255,
           'null' => false,
