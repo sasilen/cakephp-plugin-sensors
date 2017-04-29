@@ -20,3 +20,18 @@ Migrate database schema
 ```
 ./bin/cake migrations migrate -p Sensors
 ```
+
+## Triggers
+If you want to update sensor_id automatically from the sensors list when sensor_value is inserted you can create these two trigger
+```
+CREATE TRIGGER sensor_values_sensor_id_updater
+BEFORE UPDATE ON sensor_values
+    FOR EACH ROW
+          SET new.sensor_id = (select id from sensors where name=new.sensor);
+
+CREATE TRIGGER sensor_values_sensor_id_inserter
+BEFORE INSERT ON sensor_values
+    FOR EACH ROW
+          SET new.sensor_id = (select id from sensors where name=new.sensor);
+
+```

@@ -27,29 +27,26 @@ class SensorsController extends AppController
         $series = array();
         $chart = array();
 
-/*      $this->paginate['limit'] = 30;
-      $sensors = $this->paginate($this->Sensors->find()->contain(['SensorValues' => function ($q) {return $q
-          ->where(['SensorValues.datetime >= ' => new \DateTime('-7 days')]);
-          ->order('datetime DESC');
-*/
         if (!is_null($tag)) :
             $query = $this->Sensors->find()
-                ->contain(['SensorValues' => ['sort'=> ['SensorValues.datetime' => 'ASC' ]],
-                           'Tags'])
+                ->contain(['SensorValues' => function ($q) {return $q
+                ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
+//                ->limit(10000)
+                ->order('SensorValues.datetime ASC');
+                },'Tags'])
                 ->matching('Tags', function ($q) use ($tag) {
                     return $q->where(['Tags.label LIKE "'. $tag .'"']);
-            });
-            $sensors = $this->paginate($query);
+                });
         else:
-            $this->paginate = [
-                'contain' => [
-                    'SensorValues' => ['sort'=> ['SensorValues.datetime' => 'ASC']],
-//                                       'filter'= ['SensorValues.datetime >= ' => new \DateTime('-7 days')]],
-                    'Tags'
-                ]
-            ];
-            $sensors = $this->paginate($this->Sensors);
+            $query = $this->Sensors->find()
+                ->contain(['SensorValues' => function ($q) {return $q
+                ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
+//                ->limit(10000)
+                ->order('SensorValues.datetime ASC');
+            },'Tags']);
         endif;
+
+        $sensors = $this->paginate($query);
 
         $chartName = 'Line Chart';
         $myChart = $this->Highcharts->createChart();

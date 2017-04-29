@@ -5,8 +5,12 @@ class Initial extends AbstractMigration
 {
   public function change()
   {
-    $table = $this->table('sensors');
+    $table = $this->table('sensors',['charset' => 'utf8']);
     $table
+      ->addColumn('id', 'integer', [
+          'autoIncrement' => true,
+          'limit' => 11
+      ])
       ->addColumn('name', 'string', [
           'limit' => 255,
           'null' => false,
@@ -23,11 +27,21 @@ class Initial extends AbstractMigration
           'limit' => 5,
           'null' => true,
       ])
+      ->addPrimaryKey('id')
       ->create();
 
     $table = $this->table('sensor_values');
     $table
+      ->addColumn('id', 'integer', [
+          'autoIncrement' => true,                 
+          'limit' => 11                             
+      ])                  
+      ->addPrimaryKey('id')
       ->addColumn('sensor_id', 'string', [
+          'limit' => 15,
+          'null' => false,
+      ])
+      ->addColumn('name', 'string', [
           'limit' => 15,
           'null' => false,
       ])
