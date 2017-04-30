@@ -3,16 +3,7 @@
   * @var \App\View\AppView $this
   */
 ?>
-<nav class="large-3 medium-4 columns" id="actions-sidebar">
-    <ul class="side-nav">
-        <li class="heading"><?= __('Actions') ?></li>
-        <li><?= $this->Html->link(__('New Sensor'), ['action' => 'add']) ?></li>
-        <li><?= $this->Html->link(__('List Sensor Values'), ['controller' => 'SensorValues', 'action' => 'index']) ?></li>
-        <li><?= $this->Html->link(__('New Sensor Value'), ['controller' => 'SensorValues', 'action' => 'add']) ?></li>
-    </ul>
-</nav>
-    
-    <div class="sensors index large-9 medium-8 columns content">
+    <div class="sensors index large-12 medium-12 columns content">
     <h3><?= __('Sensors') ?></h3>
 
     <?php foreach (array_keys($chart) as $type):?>

@@ -22,22 +22,34 @@ class SensorsController extends AppController
      *
      * @return \Cake\Network\Response|null
      */
-    public function index($tag = null)
+    public function index()
     {
         $series = array();
         $chart = array();
 
-        if (!is_null($tag)) :
+        $tags = $this->request->getQuery('tags');
+
+        if (!is_null($tags) && !in_array('byAge', $tags)) : 
             $query = $this->Sensors->find()
                 ->contain(['SensorValues' => function ($q) {return $q
                 ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
 //                ->limit(10000)
                 ->order('SensorValues.datetime ASC');
                 },'Tags'])
-                ->matching('Tags', function ($q) use ($tag) {
-                    return $q->where(['Tags.label LIKE "'. $tag .'"']);
+                ->matching('Tags', function ($q) use ($tags) {
+                    return $q->where(['Tags.label LIKE "'. $tags[0] .'"']);
                 });
-        else:
+        elseif (!is_null($tags) && in_array('byAge', $tags)) :
+            $query = $this->Sensors->find()
+                ->contain(['SensorValues' => function ($q) {return $q
+//                ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
+//                ->limit(10000)
+                ->order('SensorValues.datetime ASC');
+                },'Tags'])
+                ->matching('Tags', function ($q) use ($tags) {
+                    return $q->where(['Tags.label LIKE "'. $tags[0] .'"']);
+                });
+        else :
             $query = $this->Sensors->find()
                 ->contain(['SensorValues' => function ($q) {return $q
                 ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
@@ -53,7 +65,7 @@ class SensorsController extends AppController
         foreach($sensors as $sensor):
             foreach($sensor['sensor_values'] as $sv):
                 $time = new Time($sv->datetime);
-                if ($tag=='byAge'):
+                if ($tags[0]=='byAge'):
                   $age = date_diff(date_create($sensor->datetime),date_create($sv->datetime));
                   $series[$sv->type][$sensor->name][] = array(floatval($age->format('%a')/365),$sv->value);
                 elseif(strpos( $sv->type, 'latch' ) !== false):
@@ -73,7 +85,7 @@ class SensorsController extends AppController
           $chart[$type]->subtitle['text'] = 'Raspberry';
           $chart[$type]->yAxis['title']['text'] = $type;
           $chart[$type]->xAxis['title']['text'] = 'date';
-          if ($tag!='Age') $chart[$type]->xAxis['type'] = 'datetime';
+          if ($tags[0]!='byAge') $chart[$type]->xAxis['type'] = 'datetime';
           $chart[$type]->plotOptions->line->marker->enabled = true;
           $chart[$type]->chart->zoomType = 'x';
           if (strpos( $type, 'latch' ) !== false) :
