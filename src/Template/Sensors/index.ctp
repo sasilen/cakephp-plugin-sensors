@@ -9,7 +9,7 @@
     <?php foreach (array_keys($chart) as $type):?>
       <div class="chart">
       <h4><?=$type;?></h3> 
-      <div id="linewrapper_<?=$type;?>" style="display: block; margin-bottom: 20px;"></div>
+      <div id="linewrapper_<?=$type;?>" class="large-12"style="display: block; margin-bottom: 20px;"></div>
       <div class="clear"></div>
       <?php echo $this->Highcharts->render($chart[$type],$type); ?>
       </div>
