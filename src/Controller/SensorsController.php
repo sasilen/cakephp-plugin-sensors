@@ -15,6 +15,7 @@ class SensorsController extends AppController
     {
         parent::initialize();
         $this->loadComponent('Highcharts.Highcharts');
+      	$this->Auth->allow(['add','add.json']);
     }
 
     /**

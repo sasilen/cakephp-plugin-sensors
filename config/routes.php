@@ -3,6 +3,8 @@ use Cake\Routing\RouteBuilder;
 use Cake\Routing\Router;
 use Cake\Routing\Route\DashedRoute;
 
+Router::extensions(['json', 'xml']);
+
 Router::plugin(
     'Sensors',
     ['path' => '/sensors'],

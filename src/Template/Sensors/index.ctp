@@ -3,7 +3,8 @@
   * @var \App\View\AppView $this
   */
 ?>
-    <div class="sensors index large-12 medium-12 columns content">
+<!--    <div class="sensors index large-12 medium-12 columns content"> -->
+		<div class="container">
     <h3><?= __('Sensors') ?></h3>
 
     <?php foreach (array_keys($chart) as $type):?>
@@ -34,7 +35,7 @@
                 <td><?= h($sensor->datetime) ?></td>
                 <td><?= h($sensor->description) ?></td>
                 <td><?php foreach ($sensor->tags as $tag): ?>
-                    <?= $this->Html->link($tag->label, ['action' => 'index', $tag->label]) ?>
+                    <?= $this->Html->link($tag->label, ['action' => 'index', '?'=>['tags'=>$tag->label ]]) ?>
                     <?php endforeach; ?>
                 </td>
 
