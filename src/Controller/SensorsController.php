@@ -105,7 +105,9 @@ class SensorsController extends AppController
           endforeach;
         endforeach;
 
-        $this->set(compact('sensors'));
+				$tags = $this->Sensors->Tags->find()->select(['label'])->distinct(['label'])->all();
+
+        $this->set(compact('sensors','tags'));
         $this->set(compact('chart','chartName'));
         $this->set('_serialize', ['sensors']);
     }
@@ -120,7 +122,7 @@ class SensorsController extends AppController
     public function view($id = null)
     {
         $sensor = $this->Sensors->get($id, [
-              'contain' => ['SensorValues','Tags']
+              'contain' => ['SensorValues' =>['sort' => ['SensorValues.datetime'=>'ASC']],'Tags']
         ]);
         foreach($sensor['sensor_values'] as $sv):
             $time = new Time($sv->datetime);

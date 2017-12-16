@@ -27,11 +27,14 @@ If you want to update sensor_id automatically from the sensors list when sensor_
 CREATE TRIGGER sensor_values_sensor_id_updater
 BEFORE UPDATE ON sensor_values
     FOR EACH ROW
-          SET new.sensor_id = (select id from sensors where name=new.sensor);
+          SET new.sensor_id = (select id from sensors where name=new.name);
 
 CREATE TRIGGER sensor_values_sensor_id_inserter
 BEFORE INSERT ON sensor_values
     FOR EACH ROW
-          SET new.sensor_id = (select id from sensors where name=new.sensor);
+          SET new.sensor_id = (select id from sensors where name=new.name);
+
+FIX missing:
+UPDATE sensor_values SET sensor_values.sensor_id = (SELECT sensors.id FROM sensors WHERE sensors.name = sensor_values.name ) WHERE sensor_values.sensor_id = '';
 
 ```

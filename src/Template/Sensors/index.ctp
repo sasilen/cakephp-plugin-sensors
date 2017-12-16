@@ -3,9 +3,25 @@
   * @var \App\View\AppView $this
   */
 ?>
-<!--    <div class="sensors index large-12 medium-12 columns content"> -->
-		<div class="container">
-    <h3><?= __('Sensors') ?></h3>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+		<?php $this->Breadcrumbs->templates([
+      'wrapper' => '<ol class="breadcrumb">{{content}}</ol>',
+      'separator' => '<li{{attrs}}>{{separator}}</li>'
+    ]);
+    $this->Breadcrumbs->add('Sensors',['plugin'=>'Sensors','controller' => 'sensors', 'action' => 'index'],['class'=>'breadcrumb-item']);
+    $this->Breadcrumbs->add('index',null,['class'=>'breadcrumb-item active']);
+    $this->Breadcrumbs->add($this->AuthLink->link($this->Html->image('Blog.ic_note_add_black_24px.svg'),['plugin'=>'Sensors','controller'=>'sensors','action' => 'add'],['escape'=>false,'class'=>'ml-1 float-right']));
+		foreach ($tags as $tag) :
+  		$this->Breadcrumbs->add($tag['label'],['plugin'=>'Sensors','controller' => 'sensors', 'action' => 'index','tags'=>[ $tag['label'] ] ],['class'=>'badge badge-info ml-1 float-right']);
+		endforeach;
+
+    echo $this->Breadcrumbs->render(
+      ['separator' => '/']
+    );
+?>
+
 
     <?php foreach (array_keys($chart) as $type):?>
       <div class="chart">
@@ -15,34 +31,32 @@
       <?php echo $this->Highcharts->render($chart[$type],$type); ?>
       </div>
     <?php endforeach;?>
+		</div>
 
-    <table cellpadding="0" cellspacing="0">
+		 <table class="table table-bordered">
+
         <thead>
             <tr>
-                <th scope="col"><?= $this->Paginator->sort('id') ?></th>
                 <th scope="col"><?= $this->Paginator->sort('name') ?></th>
                 <th scope="col"><?= $this->Paginator->sort('datetime') ?></th>
                 <th scope="col"><?= $this->Paginator->sort('description') ?></th>
                 <th scope="col" class="actions"><?= $this->Html->link(__('Tags'), ['action' => 'index']) ?></th>
-                <th scope="col" class="actions"><?= __('Actions') ?></th>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($sensors as $sensor): ?>
             <tr>
-                <td><?= h($sensor->id) ?></td>
-                <td><?= h($sensor->name) ?></td>
-                <td><?= h($sensor->datetime) ?></td>
+                <td><?=$this->Html->link(h($sensor->name), ['action' => 'view', $sensor->id]) ?></td>
+                <td><?= h($sensor->datetime->i18nFormat('dd-MM-yyyy')) ?></td>
                 <td><?= h($sensor->description) ?></td>
                 <td><?php foreach ($sensor->tags as $tag): ?>
-                    <?= $this->Html->link($tag->label, ['action' => 'index', '?'=>['tags'=>$tag->label ]]) ?>
+                    <?= $this->Html->link($tag->label, ['action' => 'index', '?'=>['tags'=>[$tag->label] ]]) ?>
                     <?php endforeach; ?>
-                </td>
 
-                <td class="actions">
-                    <?= $this->Html->link(__('View'), ['action' => 'view', $sensor->id]) ?>
-                    <?= $this->Html->link(__('Edit'), ['action' => 'edit', $sensor->id]) ?>
-                    <?= $this->Form->postLink(__('Delete'), ['action' => 'delete', $sensor->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensor->id)]) ?>
+										<?= $this->AuthLink->link($this->Html->image('Blog.ic_mode_edit_black_24px.svg'),['plugin'=>'Sensors','controller'=>'sensors','action' => 'edit',$sensor->id],['escape'=>false,'class'=>'float-right']);?>
+   				          <?php if ($this->AuthLink->isAuthorized(['plugin'=>'Sensors','controller'=>'sensors','action' => 'delete',$sensor->id])) : ?>
+                     <?= $this->Form->postLink($this->Html->image('ic_delete_forever_black_24px.svg'), ['action' => 'delete', $sensor->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensor->id),'escape'=>false,'class'=>'float-right']) ?>
+                   <?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>

@@ -3,29 +3,29 @@
   * @var \App\View\AppView $this
   */
 ?>
-<nav class="large-3 medium-4 columns" id="actions-sidebar">
-    <ul class="side-nav">
-        <li class="heading"><?= __('Actions') ?></li>
-        <li><?= $this->Form->postLink(
-                __('Delete'),
-                ['action' => 'delete', $sensorValue->id],
-                ['confirm' => __('Are you sure you want to delete # {0}?', $sensorValue->id)]
-            )
-        ?></li>
-        <li><?= $this->Html->link(__('List Sensor Values'), ['action' => 'index']) ?></li>
-        <li><?= $this->Html->link(__('List Sensors'), ['controller' => 'Sensors', 'action' => 'index']) ?></li>
-        <li><?= $this->Html->link(__('New Sensor'), ['controller' => 'Sensors', 'action' => 'add']) ?></li>
-    </ul>
-</nav>
-<div class="sensorValues form large-9 medium-8 columns content">
-    <?= $this->Form->create($sensorValue) ?>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+    <?php $this->Breadcrumbs->templates([
+      'wrapper' => '<ol class="breadcrumb">{{content}}</ol>',
+      'separator' => '<li{{attrs}}>{{separator}}</li>'
+    ]);
+    $this->Breadcrumbs->add('Sensor value',['plugin'=>'Sensors','controller' => 'SensorValues', 'action' => 'index'],['class'=>'breadcrumb-item']);
+    $this->Breadcrumbs->add('edit',null,['class'=>'breadcrumb-item active']);
+
+    echo $this->Breadcrumbs->render(
+      ['separator' => '/']
+    );
+?>
+		<div class="form-group col-sm-12">
+    <?= $this->Form->create($sensorValue,['class'=>'form-horizontal']) ?>
     <fieldset>
-        <legend><?= __('Edit Sensor Value') ?></legend>
         <?php
-            echo $this->Form->control('sensor_id', ['options' => $sensors]);
-            echo $this->Form->control('datetime');
-            echo $this->Form->control('value');
-            echo $this->Form->control('type');
+            echo $this->Form->control('name',['label' => ['class' => 'col-sm-2 control-label', 'text' => __('Name')]]);
+						echo $this->Form->control('sensor_id', ['default'=>$sensorValue['sensor_id'],'options' => $sensors,'label' => ['class' => 'col-sm-2 control-label', 'text' => __('Sensor')]]);
+            echo $this->Form->control('datetime',['label' => ['class' => 'col-sm-2 control-label', 'text' => __('Datetime')]]);
+            echo $this->Form->control('value',['label' => ['class' => 'col-sm-2 control-label', 'text' => __('Value')]]);
+            echo $this->Form->control('type',['label' => ['class' => 'col-sm-2 control-label', 'text' => __('Type')]]);
         ?>
     </fieldset>
     <?= $this->Form->button(__('Submit')) ?>
