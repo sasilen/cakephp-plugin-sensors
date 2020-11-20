@@ -5,7 +5,7 @@
     "license": "MIT",
     "require": {
         "cakephp/cakephp": "~4.1.0",
-        "muffin/tags": "cake-4.x",
+        "muffin/tags": "cake-4.x"
     },
     "require-dev": {
         "phpunit/phpunit": "^8.0"
