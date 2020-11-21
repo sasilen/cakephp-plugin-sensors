@@ -1,22 +1,24 @@
 <?php
-namespace Sensors\Model\Entity;
+declare(strict_types=1);
+
+namespace Sensor\Model\Entity;
 
 use Cake\ORM\Entity;
 
 /**
  * Sensor Entity
  *
- * @property string $id
+ * @property int $id
  * @property string $name
- * @property \Cake\I18n\Time $datetime
+ * @property \Cake\I18n\FrozenTime $datetime
  * @property string $description
+ * @property int|null $tag_count
  *
- * @property \Sensors\Model\Entity\SensorValue[] $sensor_values
- * @property \Sensors\Model\Entity\SensorvaluesOLD[] $sensorvalues_o_l_d
+ * @property \Sensor\Model\Entity\SensorValue[] $sensor_values
+ * @property \Sensor\Model\Entity\Phinxlog[] $phinxlog
  */
 class Sensor extends Entity
 {
-
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
      *
@@ -27,7 +29,9 @@ class Sensor extends Entity
      * @var array
      */
     protected $_accessible = [
-        '*' => true,
-        'id' => false
+        'name' => true,
+        'datetime' => true,
+        'description' => true,
+        'sensor_values' => true,
     ];
 }

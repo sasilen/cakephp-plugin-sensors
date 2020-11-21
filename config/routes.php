@@ -6,7 +6,7 @@ use Cake\Routing\Route\DashedRoute;
 Router::extensions(['json', 'xml']);
 
 Router::plugin(
-    'Sensors',
+    'Sasilen/Sensors',
     ['path' => '/sensors'],
     function (RouteBuilder $routes) {
         $routes->fallbacks(DashedRoute::class);

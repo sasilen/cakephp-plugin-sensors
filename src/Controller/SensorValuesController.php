@@ -1,64 +1,56 @@
 <?php
-namespace Sensors\Controller;
+declare(strict_types=1);
 
-use Sensors\Controller\AppController;
+namespace Sensor\Controller;
 
 /**
  * SensorValues Controller
  *
- * @property \Sensors\Model\Table\SensorValuesTable $SensorValues
+ * @property \Sensor\Model\Table\SensorValuesTable $SensorValues
+ *
+ * @method \Sensor\Model\Entity\SensorValue[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class SensorValuesController extends AppController
 {
-
-		public function initialize()
-    {
-      parent::initialize();
-      $this->Auth->allow(['add','add.json']);
-    }
-
-
     /**
      * Index method
      *
-     * @return \Cake\Network\Response|null
+     * @return \Cake\Http\Response|null|void Renders view
      */
     public function index()
     {
         $this->paginate = [
-            'contain' => ['Sensors']
+            'contain' => ['Sensors'],
         ];
         $sensorValues = $this->paginate($this->SensorValues);
 
         $this->set(compact('sensorValues'));
-        $this->set('_serialize', ['sensorValues']);
     }
 
     /**
      * View method
      *
      * @param string|null $id Sensor Value id.
-     * @return \Cake\Network\Response|null
+     * @return \Cake\Http\Response|null|void Renders view
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function view($id = null)
     {
         $sensorValue = $this->SensorValues->get($id, [
-            'contain' => ['Sensors']
+            'contain' => ['Sensors'],
         ]);
 
         $this->set('sensorValue', $sensorValue);
-        $this->set('_serialize', ['sensorValue']);
     }
 
     /**
      * Add method
      *
-     * @return \Cake\Network\Response|null Redirects on successful add, renders view otherwise.
+     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
      */
     public function add()
     {
-        $sensorValue = $this->SensorValues->newEntity();
+        $sensorValue = $this->SensorValues->newEmptyEntity();
         if ($this->request->is('post')) {
             $sensorValue = $this->SensorValues->patchEntity($sensorValue, $this->request->getData());
             if ($this->SensorValues->save($sensorValue)) {
@@ -70,20 +62,19 @@ class SensorValuesController extends AppController
         }
         $sensors = $this->SensorValues->Sensors->find('list', ['limit' => 200]);
         $this->set(compact('sensorValue', 'sensors'));
-        $this->set('_serialize', ['sensorValue']);
     }
 
     /**
      * Edit method
      *
      * @param string|null $id Sensor Value id.
-     * @return \Cake\Network\Response|null Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Network\Exception\NotFoundException When record not found.
+     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
+     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function edit($id = null)
     {
         $sensorValue = $this->SensorValues->get($id, [
-            'contain' => []
+            'contain' => [],
         ]);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $sensorValue = $this->SensorValues->patchEntity($sensorValue, $this->request->getData());
@@ -96,14 +87,13 @@ class SensorValuesController extends AppController
         }
         $sensors = $this->SensorValues->Sensors->find('list', ['limit' => 200]);
         $this->set(compact('sensorValue', 'sensors'));
-        $this->set('_serialize', ['sensorValue']);
     }
 
     /**
      * Delete method
      *
      * @param string|null $id Sensor Value id.
-     * @return \Cake\Network\Response|null Redirects to index.
+     * @return \Cake\Http\Response|null|void Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)

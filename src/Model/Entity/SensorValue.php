@@ -1,5 +1,7 @@
 <?php
-namespace Sensors\Model\Entity;
+declare(strict_types=1);
+
+namespace Sensor\Model\Entity;
 
 use Cake\ORM\Entity;
 
@@ -8,15 +10,15 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $sensor_id
- * @property \Cake\I18n\Time $datetime
+ * @property \Cake\I18n\FrozenTime $datetime
  * @property float $value
  * @property string $type
+ * @property string|null $name
  *
- * @property \Sensors\Model\Entity\Sensor $sensor
+ * @property \Sensor\Model\Entity\Sensor $sensor
  */
 class SensorValue extends Entity
 {
-
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
      *
@@ -27,7 +29,11 @@ class SensorValue extends Entity
      * @var array
      */
     protected $_accessible = [
-        '*' => true,
-        'id' => false
+        'sensor_id' => true,
+        'datetime' => true,
+        'value' => true,
+        'type' => true,
+        'name' => true,
+        'sensor' => true,
     ];
 }

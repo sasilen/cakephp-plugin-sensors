@@ -1,4 +1,4 @@
-# Sensors plugin for CakePHP
+# Sensors plugin for CakePHP 4
 
 ## Installation
 
@@ -13,7 +13,6 @@ composer require sasilen/sensors
 
 Load required modules with routes
 ```
-./bin/cake plugin load -r Highcharts
 ./bin/cake plugin load -r Sensors
 ```
 Migrate database schema
@@ -36,5 +35,4 @@ BEFORE INSERT ON sensor_values
 
 FIX missing:
 UPDATE sensor_values SET sensor_values.sensor_id = (SELECT sensors.id FROM sensors WHERE sensors.name = sensor_values.name ) WHERE sensor_values.sensor_id = '';
-
 ```

@@ -1,36 +1,44 @@
 <?php
-namespace Sensors\Controller;
+declare(strict_types=1);
 
-use Sensors\Controller\AppController;
+namespace Sasilen\Sensors\Controller;
+
+use App\Controller\AppController;
+use Cake\Utility\Hash;
 use Cake\I18n\Time;
-
 /**
  * Sensors Controller
  *
- * @property \Sensors\Model\Table\SensorsTable $Sensors
+ *
+ * @method \Sensor\Model\Entity\Sensor[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class SensorsController extends AppController
 {
-    public function initialize()
+    public function manipulate($sv)
     {
-        parent::initialize();
-        $this->loadComponent('Highcharts.Highcharts');
-      	$this->Auth->allow(['add','add.json']);
+    $time = new Time($sv->datetime);
+    $result = ['x'=>$time->format('Y-m-d'),'y'=>$sv->value];
+    if ($this->request->getQuery('tags')!==null) : 
+        if (in_array('byAge',$this->request->getQuery('tags'))) :
+            $time1 = new Time($sv->bdate);
+            $time2 = new Time($sv->datetime);
+            $age = $time1->diff($time2);
+            $result = ['x'=>round(($age->format('%a')/365),3),'y'=>$sv->value];
+        endif;
+    endif;
+    return $result;
     }
-
     /**
      * Index method
      *
-     * @return \Cake\Network\Response|null
+     * @return \Cake\Http\Response|null|void Renders view
      */
     public function index()
     {
-        $series = array();
-        $chart = array();
-
-        $tags = $this->request->getQuery('tags');
-
-        if (!is_null($tags) && !in_array('byAge', $tags)) : 
+    $chart = $results = NULL;
+    $tags = $this->request->getQuery('tags');
+//    $parser = ['time'=>['unit'=> 'day','parser'=>'YYYY-MM-DD'],'type'=>'linear'];
+    if (!is_null($tags) && !in_array('byAge', $tags)) :
             $query = $this->Sensors->find()
                 ->contain(['SensorValues' => function ($q) {return $q
                 ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
@@ -40,7 +48,8 @@ class SensorsController extends AppController
                 ->matching('Tags', function ($q) use ($tags) {
                     return $q->where(['Tags.label LIKE "'. $tags[0] .'"']);
                 });
-        elseif (!is_null($tags) && in_array('byAge', $tags)) :
+    elseif (!is_null($tags) && in_array('byAge', $tags)) :
+//            $parser = ['time'=>['unit'=> 'day','parser'=>'YYYY-MM-DD'],'ticks'=>['stepSize'=>0.5],'type'=>'linear'];
             $query = $this->Sensors->find()
                 ->contain(['SensorValues' => function ($q) {return $q
 //                ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
@@ -50,130 +59,90 @@ class SensorsController extends AppController
                 ->matching('Tags', function ($q) use ($tags) {
                     return $q->where(['Tags.label LIKE "'. $tags[0] .'"']);
                 });
-        else :
-            $query = $this->Sensors->find()
-                ->contain(['SensorValues' => function ($q) {return $q
+    else :
+        $query = $this->Sensors->find()->contain(['SensorValues' => function ($q) {return $q
                 ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
 //                ->limit(10000)
                 ->order('SensorValues.datetime ASC');
-            },'Tags']);
-        endif;
+                },'Tags']);
+    endif;
 
-        $sensors = $this->paginate($query);
+    $sensors = $this->paginate($query);
 
-        $chartName = 'Line Chart';
-        $myChart = $this->Highcharts->createChart();
-        foreach($sensors as $sensor):
-            foreach($sensor['sensor_values'] as $sv):
-                $time = new Time($sv->datetime);
-                if ($tags[0]=='byAge'):
-                  $age = date_diff(date_create($sensor->datetime),date_create($sv->datetime));
-                  $series[$sv->type][$sensor->name][] = array(floatval($age->format('%a')/365),$sv->value);
-                elseif(strpos( $sv->type, 'latch' ) !== false):
-                  $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,floatval($time->format('H').$time->format('i')));
-                else:
-                  $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,$sv->value);
-                endif;
-            endforeach;
-        endforeach; 
-
-        foreach ( $series as $type => $sensor ) :
-          $chart[$type] = $this->Highcharts->createChart();
-          $chart[$type]->chart['renderTo'] = 'linewrapper_'.$type;
-          if (strpos( $type, 'latch' ) === false) $chart[$type]->chart['type'] = 'line';
-          else $chart[$type]->chart['type'] = 'scatter';
-          $chart[$type]->title['text'] = $type;
-          $chart[$type]->subtitle['text'] = 'Raspberry';
-          $chart[$type]->yAxis['title']['text'] = $type;
-          $chart[$type]->xAxis['title']['text'] = 'date';
-          if ($tags[0]!='byAge') $chart[$type]->xAxis['type'] = 'datetime';
-          $chart[$type]->plotOptions->line->marker->enabled = true;
-          $chart[$type]->chart->zoomType = 'x';
-          if (strpos( $type, 'latch' ) !== false) :
-              $chart[$type]->tooltip->formatter = $this->Highcharts->createJsExpr(
-                  "function() {
-                        return ''+
-                        Highcharts.dateFormat('%e - %b - %Y', new Date(this.x))+' d, '+ this.y +' h';
-                  }"
-              );
-          endif;
-
-        foreach ($sensor as $name => $values):
-          $chart[$type]->series[] = array(
-            'name' => $name,
-            'data' => $values);
-          endforeach;
+    foreach ($sensors as $skey=>$sensor) :
+        foreach ($sensor['sensor_values'] as $vkey=>$value) :
+            $value['bdate'] = $sensor['datetime'];
+            $results[$value['type']][$sensor['name']][] = $this->manipulate($value);
         endforeach;
+    endforeach;
 
-				$tags = $this->Sensors->Tags->find()->select(['label'])->distinct(['label'])->all();
+    if ($results!=NULL):
+        foreach ($results as $key=>$types) :
+//            $chart[$key]['options']['scales']['xAxes'][] = $parser;
+            foreach ($types as $tkey=>$values) :
+                $border = 0;
+                $chart[$key]['type'] = 'line';
+                $chart[$key]['data']['datasets'][] = [
+                    'label' => $tkey,
+                    'data' => $results[$key][$tkey],
+                    'borderColor' => 'rgba('.($border=$border+50).',0,0,0.5)',
+                    'fill' => False
+                ];
+            endforeach;
+            $labels = array_unique(Hash::extract($chart[$key]['data']['datasets'], '{n}.data.{n}.x'));
+            asort($labels);//SORT_STRING | SORT_FLAG_CASE | SORT_NATURAL);
+            $chart[$key]['data']['labels'] = array_values($labels);
+        endforeach;
+    endif;
 
-        $this->set(compact('sensors','tags'));
-        $this->set(compact('chart','chartName'));
-        $this->set('_serialize', ['sensors']);
+	$this->set(compact('sensors'));
+    $this->set('chart',$chart);
     }
 
     /**
      * View method
      *
      * @param string|null $id Sensor id.
-     * @return \Cake\Network\Response|null
+     * @return \Cake\Http\Response|null|void Renders view
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function view($id = null)
     {
         $sensor = $this->Sensors->get($id, [
-              'contain' => ['SensorValues' =>['sort' => ['SensorValues.datetime'=>'ASC']],'Tags']
+            'contain' => ['SensorValues' =>['sort' => ['SensorValues.datetime'=>'ASC']],'Tags'],
         ]);
-        foreach($sensor['sensor_values'] as $sv):
-            $time = new Time($sv->datetime);
-                if(strpos( $sv->type, 'latch' ) !== false):
-                    $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,floatval($time->format('H').$time->format('i')));
-                else:
-                    $series[$sv->type][$sensor->name][] = array($time->toUnixString()*1000,$sv->value);
-                endif;
-        endforeach;
+        $border = 0;
+	$chart['type'] = 'line';
+   	$chart['options']['scales']['xAxes'][] = ['time' =>  ['unit'=> 'day','parser'=>'YYYY-MM-DD']];
 
-        foreach ( $series as $type => $cat ) :
-          $chart[$type] = $this->Highcharts->createChart();
-          $chart[$type]->chart['renderTo'] = 'linewrapper_'.$type;
-          if (strpos( $type, 'latch' ) === false) $chart[$type]->chart['type'] = 'line';
-          else $chart[$type]->chart['type'] = 'scatter';
-          $chart[$type]->title['text'] = $type;
-          $chart[$type]->subtitle['text'] = 'Raspberry';
-          $chart[$type]->yAxis['title']['text'] = $type;
-          $chart[$type]->xAxis['title']['text'] = 'date';
-          $chart[$type]->xAxis['type'] = 'datetime';
-          $chart[$type]->plotOptions->line->marker->enabled = true;
-          $chart[$type]->chart->zoomType = 'x';
-          if (strpos( $type, 'latch' ) !== false) :
-              $chart[$type]->tooltip->formatter = $this->Highcharts->createJsExpr(
-                  "function() {
-                        return ''+
-                        Highcharts.dateFormat('%e - %b - %Y', new Date(this.x))+' d, '+ this.y +' h';
-                  }"
-              );
-          endif;
+	foreach (array_unique(Hash::extract($sensor['sensor_values'], '{n}.type')) as $svtype) :
+            $result[$svtype] = Hash::map($sensor['sensor_values'], "{n}[type=$svtype]", [$this, 'manipulate']);
+            $chart['data']['datasets'][] = [
+                'label' => $svtype,
+                'data' => $result[$svtype],
+                'borderColor' => 'rgba('.($border=$border+50).',0,0,0.5)',
+                'fill' => False
+            ];
+	endforeach;
 
-          foreach ($cat as $name => $values):
-          $chart[$type]->series[] = array(
-            'name' => $name,
-            'data' => $values);
-          endforeach;
-        endforeach;
+        $labels = array_unique(Hash::extract($chart['data']['datasets'], '{n}.data.{n}.x'));
+        asort($labels,SORT_STRING | SORT_FLAG_CASE | SORT_NATURAL);
+	$chart['data']['labels'] = array_values($labels);
 
-        $this->set(compact('chart','chartName'));
-        $this->set(compact('sensor'));
-        $this->set('_serialize', ['sensor']);
+//	unset($chart['data']['datasets'][1]);
+
+     	$this->set('sensor', $sensor);
+    	$this->set('chart',$chart);
     }
 
     /**
      * Add method
      *
-     * @return \Cake\Network\Response|null Redirects on successful add, renders view otherwise.
+     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
      */
     public function add()
     {
-        $sensor = $this->Sensors->newEntity();
+        $sensor = $this->Sensors->newEmptyEntity();
         if ($this->request->is('post')) {
             $sensor = $this->Sensors->patchEntity($sensor, $this->request->getData());
             if ($this->Sensors->save($sensor)) {
@@ -184,20 +153,19 @@ class SensorsController extends AppController
             $this->Flash->error(__('The sensor could not be saved. Please, try again.'));
         }
         $this->set(compact('sensor'));
-        $this->set('_serialize', ['sensor']);
     }
 
     /**
      * Edit method
      *
      * @param string|null $id Sensor id.
-     * @return \Cake\Network\Response|null Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Network\Exception\NotFoundException When record not found.
+     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
+     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function edit($id = null)
     {
         $sensor = $this->Sensors->get($id, [
-            'contain' => ['Tags']
+            'contain' => ['tags'],
         ]);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $sensor = $this->Sensors->patchEntity($sensor, $this->request->getData());
@@ -207,22 +175,21 @@ class SensorsController extends AppController
                 return $this->redirect(['action' => 'index']);
             }
             $this->Flash->error(__('The sensor could not be saved. Please, try again.'));
-        }
-        $tags = [];
+	}
+	$tags = [];
         $alltags = $sensor->tags;
         foreach ($alltags as $tag):
           $tags[] = $tag->label;
         endforeach;
         $sensor->tags = implode(',', $tags);
-        $this->set(compact('sensor'));
-        $this->set('_serialize', ['sensor']);
+	$this->set(compact('sensor'));
     }
 
     /**
      * Delete method
      *
      * @param string|null $id Sensor id.
-     * @return \Cake\Network\Response|null Redirects to index.
+     * @return \Cake\Http\Response|null|void Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)
