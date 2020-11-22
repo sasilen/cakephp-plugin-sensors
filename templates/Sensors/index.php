@@ -24,7 +24,7 @@
         <canvas id="canvas_<?=$type;?>"></canvas>
         <script>
             var config_<?=$type;?> = {
-                type:    'line',
+                type:    'scatter',
                 data:    {
                     labels: <?=json_encode($chart[$type]['data']['labels']);?>,
                     datasets: [
@@ -33,7 +33,8 @@
                              label: "<?=$chart[$type]['data']['datasets'][$i]['label'];?>",
                              data: <?=json_encode($chart[$type]['data']['datasets'][$i]['data']);?>,
                              fill: false,
-                             borderColor: "<?=$color[$i];?>"
+			     borderColor: "<?=$color[$i];?>",
+			     showLine: true
                          },
                     <?php endforeach; ?>
                     ]
@@ -43,8 +44,16 @@
                     title:      {
                         display: true,
                         text:    "<?=$type;?>"
-                    }
-                }
+		    },
+		    scales: {
+		        xAxes: [{
+		            ticks: {
+	                    	stepSize: 0.5
+                            }
+        		}]
+
+                   }
+		}
             };
             window.onload = function () {
                 <?php foreach (array_keys($chart) as $type): ?>
@@ -56,7 +65,7 @@
         </script>
     <?php endforeach; endif;?>
 
-        <table class="table table-bordered">
+        <table class="table table-sm">
         <thead>
             <tr>
                 <th scope="col"><?= $this->Paginator->sort('name') ?></th>
@@ -72,12 +81,11 @@
                 <td><?= h($sensor->datetime->i18nFormat('dd-MM-yyyy')) ?></td>
                 <td><?= h($sensor->description) ?></td>
                 <td><?php foreach ($sensor->tags as $tag): ?>
-                    <?= $this->Html->link($tag->label, ['action' => 'index', '?'=>['tags'=>[$tag->label] ]]) ?>
+                        <?= $this->Html->link($tag->label, ['action' => 'index', '?'=>['tags'=>[$tag->label] ]]) ?>
                     <?php endforeach; ?>
-
-										<?= $this->AuthLink->link($this->Html->image('Blog.ic_mode_edit_black_24px.svg'),['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'edit',$sensor->id],['escape'=>false,'class'=>'float-right']);?>
-   				          <?php if ($this->AuthLink->isAuthorized(['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'delete',$sensor->id])) : ?>
-                     <?= $this->Form->postLink($this->Html->image('ic_delete_forever_black_24px.svg'), ['action' => 'delete', $sensor->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensor->id),'escape'=>false,'class'=>'float-right']) ?>
+                    <?= $this->AuthLink->link($this->Html->image('Blog.ic_mode_edit_black_24px.svg'),['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'edit',$sensor->id],['escape'=>false,'class'=>'float-right']);?>
+                    <?php if ($this->AuthLink->isAuthorized(['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'delete',$sensor->id])) : ?>
+                        <?= $this->Form->postLink($this->Html->image('ic_delete_forever_black_24px.svg'), ['action' => 'delete', $sensor->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensor->id),'escape'=>false,'class'=>'float-right']) ?>
                    <?php endif; ?>
                 </td>
             </tr>
@@ -94,5 +102,6 @@
         </ul>
         <p><?= $this->Paginator->counter(__('Page {{page}} of {{pages}}, showing {{current}} record(s) out of {{count}} total')) ?></p>
     </div>
-    </div>
+  </div>
+</div>
 </div>
