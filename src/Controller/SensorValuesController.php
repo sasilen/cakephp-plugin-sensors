@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Sensor\Controller;
+namespace Sasilen\Sensors\Controller;
 
 /**
  * SensorValues Controller

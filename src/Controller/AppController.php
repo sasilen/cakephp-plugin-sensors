@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Sensors\Controller;
+namespace Sasilen\Sensors\Controller;
 
 use App\Controller\AppController as BaseController;
 

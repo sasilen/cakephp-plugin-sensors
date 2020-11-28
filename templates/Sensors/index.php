@@ -6,14 +6,16 @@
 <div class="container">
   <div class="row">
     <div class="col-md-12">
+        <div style="position: absolute; margin-top:10px; right:0; margin-right:30px;">
+            <?=$this->AuthLink->link('<i class="far fa-file"></i>',['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'add'],['escape'=>false]);?>
+        </div>
     <?php
         $this->Breadcrumbs->setTemplates(['wrapper' => '<ol class="breadcrumb">{{content}}</ol>', 'separator' => '<li{{attrs}}>{{separator}}</li>']);
         $this->Breadcrumbs->add('Sensors',['plugin'=>'Sasilen/Sensors','controller' => 'sensors', 'action' => 'index'],['class'=>'breadcrumb-item']);
         $this->Breadcrumbs->add('index',null,['class'=>'breadcrumb-item active']);
-        $this->Breadcrumbs->add($this->AuthLink->link($this->Html->image('Blog.ic_note_add_black_24px.svg'),['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'add'],['escape'=>false,'class'=>'ml-1 float-right']));
-        if (isset($tags)) : 
+        if (isset($tags)) :
             foreach ($tags as $tag) :
-                $this->Breadcrumbs->add($tag,['plugin'=>'Sasilen/Sensors','controller' => 'sensors', 'action' => 'index','tags'=>$tag ],['class'=>'badge badge-info ml-1 float-right']);
+                $this->Breadcrumbs->add($tag['label'],['plugin'=>'Sasilen/Sensors','controller' => 'sensors', 'action' => 'index','?'=>['tags'=>$tag['label']] ],['class'=>'badge badge-info ml-1 ']);
             endforeach;
         endif;
         echo $this->Breadcrumbs->render(['separator' => '/']);
@@ -81,12 +83,10 @@
                 <td><?= h($sensor->datetime->i18nFormat('dd-MM-yyyy')) ?></td>
                 <td><?= h($sensor->description) ?></td>
                 <td><?php foreach ($sensor->tags as $tag): ?>
-                        <?= $this->Html->link($tag->label, ['action' => 'index', '?'=>['tags'=>[$tag->label] ]]) ?>
+                        <?= $this->Html->link($tag->label, ['action' => 'index', '?'=>['tags'=>[$tag->label]]],['class'=>'badge badge-info']) ?>
                     <?php endforeach; ?>
-                    <?= $this->AuthLink->link($this->Html->image('Blog.ic_mode_edit_black_24px.svg'),['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'edit',$sensor->id],['escape'=>false,'class'=>'float-right']);?>
-                    <?php if ($this->AuthLink->isAuthorized(['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'delete',$sensor->id])) : ?>
-                        <?= $this->Form->postLink($this->Html->image('ic_delete_forever_black_24px.svg'), ['action' => 'delete', $sensor->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensor->id),'escape'=>false,'class'=>'float-right']) ?>
-                   <?php endif; ?>
+                    <?=$this->AuthLink->link('<i class="far fa-edit"></i>',['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'edit',$sensor->id],['escape'=>false,'class'=>'float-right']);?> 
+                    <?=$this->AuthLink->postLink('<i class="far fa-trash-alt"></i>', ['plugin'=>'Sasilen/Sensors','controller'=>'sensors','action' => 'delete', $sensor->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensor->id),'escape'=>false,'class'=>'float-right']) ?>
                 </td>
             </tr>
             <?php endforeach; ?>

@@ -6,6 +6,10 @@
 <div class="container">
   <div class="row">
     <div class="col-md-12">
+       <div style="position: absolute; margin-top:10px; right:0; margin-right:30px;">
+           <?=$this->AuthLink->link('<i class="far fa-file"></i>',['plugin'=>'Sasilen/Sensors','controller'=>'sensor_values','action' => 'add'],['escape'=>false]);?>
+       </div>
+
     <?php $this->Breadcrumbs->setTemplates([
       'wrapper' => '<ol class="breadcrumb">{{content}}</ol>',
       'separator' => '<li{{attrs}}>{{separator}}</li>'
@@ -92,11 +96,8 @@
                 <td><?= h($sensorValues->datetime->i18nFormat('yyyy-MM-dd HH:mm')) ?></td>
                 <td><?= h($sensorValues->value) ?></td>
                 <td><?= h($sensorValues->type) ?>
-								<?= $this->AuthLink->link($this->Html->image('Blog.ic_mode_edit_black_24px.svg'),['plugin'=>'Sasilen/Sensors','controller'=>'SensorValues','action' => 'edit',$sensorValues->id],['escape'=>false,'class'=>'float-right']);?>
-                   <?php if ($this->AuthLink->isAuthorized(['plugin'=>'Sasilen/Sensors','controller'=>'SensorValues','action' => 'delete',$sensorValues->id])) : ?>
-                     <?= $this->Form->postLink($this->Html->image('ic_delete_forever_black_24px.svg'), ['action' => 'delete', $sensorValues->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensorValues->id),'escape'=>false,'class'=>'float-right']) ?>
-                   <?php endif; ?>
-
+                    <?=$this->AuthLink->link('<i class="far fa-edit"></i>',['plugin'=>'Sasilen/Sensors','controller'=>'SensorValues','action' => 'edit',$sensorValues->id],['escape'=>false,'class'=>'float-right']);?>
+                    <?=$this->AuthLink->postLink('<i class="far fa-trash-alt"></i>', ['plugin'=>'Sasilen/Sensors','controller'=>'SensorValues','action' => 'delete', $sensorValues->id], ['confirm' => __('Are you sure you want to delete # {0}?', $sensorValues->id),'escape'=>false,'class'=>'float-right']) ?>
                 </td>
             </tr>
             <?php endforeach; ?>

@@ -16,10 +16,12 @@ class SensorsController extends AppController
 {
     public function manipulate($sv)
     {
+    $tags = array();
+    if ($this->request->getQuery('tags')) $tags[] = $this->request->getQuery('tags');
     $time = new Time($sv->datetime);
     $result = ['x'=>$time->format('Y-m-d'),'y'=>$sv->value];
-    if ($this->request->getQuery('tags')!==null) : 
-        if (in_array('byAge',$this->request->getQuery('tags'))) :
+    if (!empty($tags)) :
+        if (in_array('byAge',$tags)) :
             $time1 = new Time($sv->bdate);
             $time2 = new Time($sv->datetime);
             $age = $time1->diff($time2);
@@ -36,9 +38,10 @@ class SensorsController extends AppController
     public function index()
     {
     $chart = $results = NULL;
-    $tags = $this->request->getQuery('tags');
+    $tags = array();
+    if ($this->request->getQuery('tags')) $tags[] = $this->request->getQuery('tags');
 //    $parser = ['time'=>['unit'=> 'day','parser'=>'YYYY-MM-DD'],'type'=>'linear'];
-    if (!is_null($tags) && !in_array('byAge', $tags)) :
+    if (!empty($tags) && !in_array('byAge', $tags)) : echo "!";
             $query = $this->Sensors->find()
                 ->contain(['SensorValues' => function ($q) {return $q
                 ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
@@ -48,7 +51,7 @@ class SensorsController extends AppController
                 ->matching('Tags', function ($q) use ($tags) {
                     return $q->where(['Tags.label LIKE "'. $tags[0] .'"']);
                 });
-    elseif (!is_null($tags) && in_array('byAge', $tags)) :
+    elseif (!empty($tags) && in_array('byAge', $tags)) :
 //            $parser = ['time'=>['unit'=> 'day','parser'=>'YYYY-MM-DD'],'ticks'=>['stepSize'=>0.5],'type'=>'linear'];
             $query = $this->Sensors->find()
                 ->contain(['SensorValues' => function ($q) {return $q
@@ -94,8 +97,8 @@ class SensorsController extends AppController
             $chart[$key]['data']['labels'] = array_values($labels);
         endforeach;
     endif;
-
-	$this->set(compact('sensors'));
+    $tags = $this->Sensors->Tags->find()->select(['label'])->distinct(['label'])->all();
+	$this->set(compact('sensors','tags'));
     $this->set('chart',$chart);
     }
 
