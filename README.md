@@ -20,7 +20,17 @@ Migrate database schema
 ```
 ./bin/cake migrations migrate -p Sensors
 ```
-
+## Add templates (main app)
+```
+# /src/View/AppView.php
+public function initialize(): void
+{
+    parent::initialize();
+    $this->loadHelper('CakeDC/Users.AuthLink');
+    $this->loadHelper('Paginator', ['templates' => 'templates-paginator']);
+    $this->loadHelper('Form', ['templates' => 'templates-form']);
+}
+```
 ## Triggers
 If you want to update sensor_id automatically from the sensors list when sensor_value is inserted you can create these two trigger
 ```
