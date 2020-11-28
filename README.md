@@ -14,7 +14,7 @@ composer require sasilen/sensors
 
 Load required modules with routes
 ```
-./bin/cake plugin load -r Sensors
+./bin/cake plugin load Sasilen/Sensors
 ```
 Migrate database schema
 ```
