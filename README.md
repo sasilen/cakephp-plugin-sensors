@@ -7,20 +7,30 @@ You can install this plugin into your CakePHP application using [composer](http:
 The recommended way to install composer packages is:
 
 ```
-composer config repositories.results git https://github.com/sasilen/cakephp-plugin-sensors.git
+composer config repositories.sensors git https://github.com/sasilen/cakephp-plugin-sensors.git
 composer require sasilen/sensors
 ```
 ## Configuration
 
 Load required modules with routes
 ```
-./bin/cake plugin load -r Sensors
+./bin/cake plugin load Sasilen/Sensors
 ```
 Migrate database schema
 ```
 ./bin/cake migrations migrate -p Sensors
 ```
-
+## Add templates (main app)
+```
+# /src/View/AppView.php
+public function initialize(): void
+{
+    parent::initialize();
+    $this->loadHelper('CakeDC/Users.AuthLink');
+    $this->loadHelper('Paginator', ['templates' => 'templates-paginator']);
+    $this->loadHelper('Form', ['templates' => 'templates-form']);
+}
+```
 ## Triggers
 If you want to update sensor_id automatically from the sensors list when sensor_value is inserted you can create these two trigger
 ```
