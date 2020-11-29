@@ -41,7 +41,7 @@ class SensorsController extends AppController
     $tags = array();
     if ($this->request->getQuery('tags')) $tags[] = $this->request->getQuery('tags');
 //    $parser = ['time'=>['unit'=> 'day','parser'=>'YYYY-MM-DD'],'type'=>'linear'];
-    if (!empty($tags) && !in_array('byAge', $tags)) : echo "!";
+    if (!empty($tags) && !in_array('byAge', $tags)) :
             $query = $this->Sensors->find()
                 ->contain(['SensorValues' => function ($q) {return $q
                 ->where(['SensorValues.datetime >= ' => new \DateTime('-3 days')])
@@ -168,7 +168,7 @@ class SensorsController extends AppController
     public function edit($id = null)
     {
         $sensor = $this->Sensors->get($id, [
-            'contain' => ['tags'],
+            'contain' => ['Tags'],
         ]);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $sensor = $this->Sensors->patchEntity($sensor, $this->request->getData());

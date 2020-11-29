@@ -2,6 +2,8 @@
 /**
   * @var \App\View\AppView $this
   */
+echo $this->Html->script('https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js', ['block' => 'scriptTop']);
+echo $this->Html->script('https://cdn.jsdelivr.net/npm/chart.js@2.8.0', ['block' => 'scriptTop']);
 ?>
 <div class="container">
   <div class="row">
